@@ -11,7 +11,7 @@
 
 - Original repository: https://github.com/ringhyacinth/Star-Office-UI
 - Original README: https://github.com/ringhyacinth/Star-Office-UI/blob/master/README.md
-- Upstream credit: Ring Hyacinth, Simon Lee (원본 프로젝트 저자/기여 맥락 존중)
+- Upstream credit: Ring Hyacinth, Simon Lee
 
 이 레포는 업스트림 코드를 기반으로 한 파생 작업이며, 원본 기여 맥락은 업스트림 저장소에서 확인할 수 있습니다.
 
