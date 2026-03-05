@@ -5,6 +5,7 @@
 이 저장소는 원본 Star-Office-UI를 그대로 재배포하는 목적이 아니라, **원본 대비 어떤 기능을 바꿨고 무엇을 추가했는지**를 정리/공유하기 위한 커스텀 변경판입니다.
 
 ---
+<img width="1041" height="591" alt="screenshot 3" src="https://github.com/user-attachments/assets/8b048ba8-57b3-4009-a75a-ec73448b6272" />
 
 ## 1) Upstream / Credits
 
