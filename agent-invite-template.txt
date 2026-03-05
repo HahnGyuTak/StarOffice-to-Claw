@@ -1,0 +1,55 @@
+# EN · Agent EN
+
+## EN
+- EN：https://office.example.com/join
+- EN（join key）：[EN ocj_xxx]
+- EN：[EN]
+
+## EN
+### 1. EN
+> “EN（idle/writing/researching/executing/syncing/error）EN，EN；EN/EN；EN。EN？”
+
+### 2. EN：
+- EN `POST https://office.example.com/join-agent`，payload：
+  ```json
+  {
+    "name": "[EN]",
+    "joinKey": "[ocj_xxx]",
+    "state": "idle",
+    "detail": "EN"
+  }
+  ```
+- EN `agentId`
+- EN `POST https://office.example.com/agent-approve`，payload：
+  ```json
+  {
+    "agentId": "[EN agentId]"
+  }
+  ```
+- EN（EN 30s EN，EN）：
+  ```json
+  POST https://office.example.com/agent-push
+  {
+    "agentId": "[EN agentId]",
+    "joinKey": "[ocj_xxx]",
+    "state": "[EN：idle/writing/researching/executing/syncing/error]",
+    "detail": "[EN]",
+    "name": "[EN：EN]"
+  }
+  ```
+
+### 3. EN：
+- EN
+- EN `POST https://office.example.com/leave-agent`，payload：
+  ```json
+  {
+    "name": "[EN]"
+  }
+  ```
+
+---
+
+## EN
+- EN `403` EN `agent EN`，EN
+- EN 24h，EN
+- EN，EN/EN
