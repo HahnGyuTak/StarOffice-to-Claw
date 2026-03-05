@@ -116,12 +116,12 @@ python3 office-agent-push.py
 
 ### 5-2. 어떻게 연결되는가?
 어댑터는 다음 흐름으로 동작합니다.
-1. `openclaw sessions --agent coding_bot --json`로 세션 상태 조회
+1. `openclaw sessions --agent <target-agent> --json`로 세션 상태 조회
 2. 최근 활동/토큰 변화/중단 여부를 바탕으로 상태 추론
 3. 추론 결과를 Star Office 게스트 상태로 업데이트
-4. 필요 시 `/openclaw/coding-bot-status`로 이벤트 push
+4. 필요 시 `/openclaw/agent-status`로 이벤트 push
 
-즉, **OpenClaw 내부 상태를 읽어서 자동으로 UI 상태를 동기화**합니다.
+즉, **OpenClaw 코어를 수정하지 않고** 세션 조회/HTTP push로 UI 상태를 동기화합니다.
 
 ### 5-3. UI에는 어떻게 보이나?
 - 게스트 이름은 보통 `coding_bot`(또는 adapter 엔트리명)으로 표시
@@ -190,7 +190,7 @@ export ASSET_DRAWER_PASS="strong-pass"
 ```bash
 export OPENCLAW_PUSH_TOKEN="strong-token"
 ```
-- 설정 시 `/openclaw/coding-bot-status`에 토큰 헤더 필요
+- 설정 시 `/openclaw/agent-status` 요청에 토큰 헤더 필요 (구형 `/openclaw/coding-bot-status`도 호환)
 
 3. 공용망 노출 시
 - reverse proxy/tunnel 사용

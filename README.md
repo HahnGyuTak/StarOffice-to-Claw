@@ -38,7 +38,7 @@
 ### B. 백엔드 상태/엔드포인트 강화
 - `backend/app.py` 확장
 - `waiting` 상태 추가 및 상태 정규화 로직 보강
-- `/openclaw/coding-bot-status` 엔드포인트 추가(옵션 토큰 인증)
+- `/openclaw/agent-status` 엔드포인트 추가(구형 `/openclaw/coding-bot-status` 호환, 옵션 토큰 인증)
 - 게스트 join/push/offline 처리 로직 개선
 
 ### C. 에셋 파이프라인/꾸미기 기능 고도화
