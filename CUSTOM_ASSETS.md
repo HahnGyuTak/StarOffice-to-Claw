@@ -50,16 +50,21 @@ Python/Pillow 환경이 필요합니다(보통 프로젝트 기본 환경에서 
 
 현재 파이프라인의 canonical 대상은 아래 4종입니다.
 
-| assetType (파일명 prefix) | 의미 | canonical 프레임 크기 | 최종 적용 파일 |
-|---|---|---:|---|
-| `star-idle` | 기본 idle 캐릭터 | 256x256 | `frontend/star-idle-v5.png` |
-| `star-working-spritesheet-grid` | 작업 상태 애니메이션 | 300x300 | `frontend/star-working-spritesheet-grid.webp` |
-| `sync-animation-v3-grid` | 동기화 애니메이션 | 256x256 | `frontend/sync-animation-v3-grid.webp` |
-| `error-bug-spritesheet-grid` | 에러 버그 애니메이션 | 220x220 | `frontend/error-bug-spritesheet-grid.webp` |
+| assetType (파일명 prefix) | 의미(사용자 관점) | 프레임별 픽셀 크기 | 권장 그리드 (cols×rows) | 권장 총 시트 픽셀 크기 (가로×세로) | 최종 적용 파일 |
+|---|---|---:|---:|---:|---|
+| `star-idle` | **쉬는 상태** 캐릭터 | 256×256 | 8×6 | 2048×1536 | `frontend/star-idle-v5.png` |
+| `star-working-spritesheet-grid` | **작업 상태** 애니메이션 | 300×300 | 8×5 *(권장 예시)* | 2400×1500 *(권장 예시)* | `frontend/star-working-spritesheet-grid.webp` |
+| `sync-animation-v3-grid` | **대기 상태**(동기화/대기 연출) | 256×256 | 9×5 *(권장 예시)* | 2304×1280 *(권장 예시)* | `frontend/sync-animation-v3-grid.webp` |
+| `error-bug-spritesheet-grid` | **에러 상태** 애니메이션 | 220×220 | 11×4 *(권장 예시)* | 2420×880 *(권장 예시)* | `frontend/error-bug-spritesheet-grid.webp` |
 
 권장 확장자:
 - 입력(`tmp_assets`): `.png` 또는 `.webp`
 - 출력(최종): 파이프라인이 target 파일 규격에 맞춰 교체
+
+설명:
+- 프레임별 픽셀 크기는 canonical 기준입니다(리패킹 시 이 크기로 맞춰짐).
+- 권장 그리드/총 시트 크기는 현재 프로젝트에서 검증된 안정적인 예시입니다.
+- 다른 그리드도 파일명 메타(`__c<cols>_r<rows>`)와 실제 이미지가 정확히 맞으면 처리 가능하지만, 품질/호환성 측면에서 위 값을 우선 권장합니다.
 
 ---
 
