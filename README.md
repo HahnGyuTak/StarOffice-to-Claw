@@ -109,8 +109,13 @@
 
 ---
 
-## 6) Included reference files
+## 6) Documentation Map
 
-- [`README.upstream.original.md`](./README.upstream.original.md) : 업스트림 원본 README 보관본
-- [`README.previous.custom.md`](./README.previous.custom.md) : 초기 커스텀 README 백업
+핵심 문서는 아래 3개만 먼저 보면 됩니다.
+
+- [`README.md`](./README.md)
+- [`SKILL.md`](./SKILL.md)
+- [`CUSTOM_ASSETS.md`](./CUSTOM_ASSETS.md)
+
+그 외 과거 기록/초안/보관 문서는 `docs/archive/`에 정리되어 있습니다.
 
