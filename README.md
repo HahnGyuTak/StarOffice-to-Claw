@@ -42,10 +42,10 @@
 - 게스트 join/push/offline 처리 로직 개선
 
 ### C. 에셋 파이프라인/꾸미기 기능 고도화
-- `tools/asset_pipeline/*` 신규 추가
-- 변형 에셋 검증/리팩/적용 스크립트 도입
-- `tmp_assets/*`를 통한 실험/교체 자산 운용
-- 배경 생성/복구/히스토리/즐겨찾기 흐름 강화
+- [`tools/asset_pipeline/`](./tools/asset_pipeline/) 신규 추가
+- 변형 에셋 검증/리팩/적용 스크립트 도입 ([`apply_variant.py`](./tools/asset_pipeline/apply_variant.py), [`parse_and_validate.py`](./tools/asset_pipeline/parse_and_validate.py), [`repack_to_canonical.py`](./tools/asset_pipeline/repack_to_canonical.py))
+- [`tmp_assets/`](./tmp_assets/)를 통한 실험/교체 자산 운용
+- 배경 생성/복구/히스토리/즐겨찾기 흐름 강화 (서버 로직: [`backend/app.py`](./backend/app.py), 즐겨찾기 저장 경로: [`assets/home-favorites/`](./assets/home-favorites/))
 
 ### D. UI/UX 개편
 - `frontend/index.html`, `frontend/game.js`, `frontend/layout.js` 등 대규모 수정
