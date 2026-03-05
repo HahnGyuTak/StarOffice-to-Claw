@@ -82,6 +82,14 @@
 2. `CUSTOM_OFFICE_NAME` (코드 기본 커스텀값)
 3. `DEFAULT_OFFICE_NAME` (`Star Office`)
 
+어디서 바꿀 수 있나:
+- 코드 기본값 변경
+  - `frontend/index.html` 상단 스크립트의 `CUSTOM_OFFICE_NAME`, `DEFAULT_OFFICE_NAME`
+  - `frontend/game.js` 상단의 동일 상수
+- 런타임에서 즉시 덮어쓰기(배포 후 임시 변경)
+  - 브라우저 콘솔에서 `window.STAR_OFFICE_NAME = '원하는이름'` 설정 후 새로고침
+  - 또는 `index.html`에 `<script>window.STAR_OFFICE_NAME='원하는이름'</script>` 주입
+
 적용 위치:
 - 로딩 텍스트
 - 게임 내 명패(plaque) 텍스트
