@@ -52,6 +52,10 @@
 - [`frontend/index.html`](./frontend/index.html), [`frontend/game.js`](./frontend/game.js), [`frontend/layout.js`](./frontend/layout.js) 등 대규모 수정
 - 다국어/모바일 대응 및 드로어 UX 개선
 - 상태 스프라이트/애니메이션 에셋 교체
+- **오피스 이름 영어 단일화 + 변경 방법 문서화**
+  - 기본값: `Star Office`
+  - 커스텀값: `Hahn Office`
+  - 변경 위치/런타임 오버라이드는 아래 `Office name policy (English-only)` 섹션 참고
 
 ### E. 운영 문서화
 - 변경 관찰/운영 노트 문서 추가
