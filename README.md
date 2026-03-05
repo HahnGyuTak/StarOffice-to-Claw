@@ -1,5 +1,7 @@
 # Star Office UI — Custom Change Report
 
+[EN ver](./README.en.md)
+
 > **Based on** the original project: https://github.com/ringhyacinth/Star-Office-UI
 
 이 저장소는 원본 Star-Office-UI를 그대로 재배포하는 목적이 아니라, **원본 대비 어떤 기능을 바꿨고 무엇을 추가했는지**를 정리/공유하기 위한 커스텀 변경판입니다.

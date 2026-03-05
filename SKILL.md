@@ -5,6 +5,8 @@ description: StarOffice-to-Claw 커스텀 연동 가이드. 사용자가 이 레
 
 # StarOffice-to-Claw 연동 가이드
 
+[EN ver](./SKILL.en.md)
+
 이 문서는 **이 커스텀 레포를 클론한 뒤**, 사용자의 OpenClaw 봇을 Star Office에 연결하는 방법을 설명합니다.
 
 ## 0) 먼저: 기본 Star Office UI 설치는 원본 가이드 사용

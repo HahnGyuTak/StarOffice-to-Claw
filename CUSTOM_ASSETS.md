@@ -1,5 +1,7 @@
 # CUSTOM_ASSETS.md
 
+[EN ver](./CUSTOM_ASSETS.en.md)
+
 처음 클론한 사용자를 위한 **커스텀 에셋 적용 가이드**입니다.
 
 이 문서 목표:
