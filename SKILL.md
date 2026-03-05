@@ -147,29 +147,35 @@ python3 openclaw_coding_bot_adapter.py --mock-status working --once
 ```
 
 ### 5-5. B안 에이전트 이름/대상 커스텀 방법 (중요)
-현재 기본 구현은 `coding_bot` 기준으로 동작합니다.
+이제 코드 수정 없이 커스텀할 수 있습니다.
 
-- 기본 대상 세션 조회: `openclaw sessions --agent coding_bot --json`
-- 기본 표시 이름: `coding_bot`
-- 기본 push 엔드포인트 제약: `/openclaw/coding-bot-status`는 기본적으로 `agent_id == "coding_bot"`만 허용
+#### 방법 1) 실행 인자로 지정 (가장 쉬움)
+```bash
+python3 openclaw_coding_bot_adapter.py \
+  --target-agent pm_bot \
+  --display-name "PM Bot" \
+  --adapter-id openclaw_pm_bot \
+  --interval 15
+```
 
-즉, **그대로 실행하면 coding_bot 전용**입니다.
+- `--target-agent`: OpenClaw에서 관찰할 실제 agent id
+- `--display-name`: Star Office UI에 표시할 이름
+- `--adapter-id`: Star Office 내부 guest 식별자(충돌 방지용)
 
-다른 에이전트 이름으로 쓰고 싶다면 아래 2단계를 함께 바꿔야 합니다.
+#### 방법 2) 환경변수로 고정
+```bash
+export STAR_OFFICE_TARGET_AGENT=pm_bot
+export STAR_OFFICE_DISPLAY_NAME="PM Bot"
+export STAR_OFFICE_ADAPTER_ID=openclaw_pm_bot
+python3 openclaw_coding_bot_adapter.py --interval 15
+```
 
-1) `openclaw_coding_bot_adapter.py` 수정
-- `run_openclaw_sessions()`의 `--agent coding_bot` 부분
-- `map_to_minimal_schema()`에서 `name: "coding_bot"`으로 넣는 부분
-- 필요하면 `ADAPTER_ID`도 프로젝트 규칙에 맞게 변경
+#### 서버 측 엔드포인트도 범용화됨
+- 기존: `/openclaw/coding-bot-status` (호환 유지)
+- 신규: `/openclaw/agent-status` (권장)
+- 이제 `agent_id`를 coding_bot으로 고정하지 않아도 됩니다.
 
-2) `backend/app.py` 수정
-- `/openclaw/coding-bot-status`의 `agent_id must be coding_bot` 검증 조건
-- `openclaw_coding_bot`/`coding_bot` 식별 분기 로직
-
-권장 운영 방식:
-- 처음 도입은 `coding_bot` 그대로 검증
-- 동작이 안정화된 뒤, 위 2파일을 같이 수정해 커스텀 이름으로 확장
-- 변경 후에는 `--mock-status`로 UI 반영부터 먼저 확인
+즉, **사용자 에이전트 이름이 coding_bot이 아니어도 바로 연동 가능**합니다.
 
 ---
 

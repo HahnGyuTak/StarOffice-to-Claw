@@ -1163,14 +1163,15 @@ def agent_push():
 
 
 @app.route("/openclaw/coding-bot-status", methods=["POST"])
-def openclaw_coding_bot_status_push():
-    """Best-effort push endpoint for coding_bot lifecycle spike.
+@app.route("/openclaw/agent-status", methods=["POST"])
+def openclaw_agent_status_push():
+    """Best-effort push endpoint for OpenClaw agent lifecycle events.
 
     Payload (minimal):
     - source: str
-    - agent_id: coding_bot
-    - event: task_started | task_finished
-    - status: working | idle
+    - agent_id: agent id string (e.g., coding_bot, pm_bot)
+    - event: task_started | task_finished | task_update
+    - status: working | waiting | idle | error
     - observed_status: optional
     - task: optional
     - updated_at: optional
@@ -1187,14 +1188,15 @@ def openclaw_coding_bot_status_push():
             return jsonify({"ok": False, "msg": "invalid json"}), 400
 
         agent_id = (data.get("agent_id") or data.get("agentId") or "").strip()
-        if agent_id != "coding_bot":
-            return jsonify({"ok": False, "msg": "agent_id must be coding_bot"}), 400
+        if not agent_id:
+            return jsonify({"ok": False, "msg": "agent_id is required"}), 400
 
         event = (data.get("event") or "").strip() or "task_update"
         raw_status = (data.get("status") or "idle")
         status = normalize_agent_state(raw_status)
         task = (data.get("task") or "").strip()
         source = (data.get("source") or "openclaw-push").strip() or "openclaw-push"
+        display_name = (data.get("display_name") or data.get("name") or agent_id).strip() or agent_id
         ttl_seconds = int(data.get("ttl_seconds") or 45)
         ttl_seconds = max(5, min(ttl_seconds, 300))
 
@@ -1202,12 +1204,13 @@ def openclaw_coding_bot_status_push():
         push_until = (datetime.now() + timedelta(seconds=ttl_seconds)).isoformat()
 
         agents = load_agents_state()
-        target = next((a for a in agents if a.get("agentId") in {"openclaw_coding_bot", "coding_bot"}), None)
+        adapter_agent_id = f"openclaw_{agent_id}"
+        target = next((a for a in agents if a.get("agentId") in {adapter_agent_id, agent_id}), None)
 
         if not target:
             target = {
-                "agentId": "openclaw_coding_bot",
-                "name": "coding_bot",
+                "agentId": adapter_agent_id,
+                "name": agent_id,
                 "role": "dev",
                 "isMain": False,
                 "avatar": "guest_role_2",
@@ -1217,6 +1220,7 @@ def openclaw_coding_bot_status_push():
         mapped_state, mapped_area = map_coding_bot_push_state_area(event, raw_status, status)
 
         target["status"] = status
+        target["name"] = display_name
         target["state"] = mapped_state
         target["task"] = task or f"[push] {event}"
         target["detail"] = f"[{status}] {target['task']}"

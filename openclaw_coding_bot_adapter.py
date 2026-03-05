@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Spike adapter: expose one OpenClaw coding_bot as a Star-Office guest agent.
+Spike adapter: expose one OpenClaw target agent as a Star-Office guest agent.
 
-Goal: minimal, low-risk integration without touching coding_bot's own workflow.
+Goal: minimal, low-risk integration without touching target agent workflow.
 - Reads OpenClaw session metadata via `openclaw sessions --all-agents --json`.
 - Maps a minimal schema to Star-Office `agents-state.json`.
 - Supports mock mode for deterministic status transition checks.
@@ -24,9 +24,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parent
 AGENTS_STATE_FILE = ROOT / "agents-state.json"
-ADAPTER_CACHE_FILE = ROOT / "memory" / "openclaw-coding-bot-adapter-cache.json"
 
-ADAPTER_ID = "openclaw_coding_bot"
+TARGET_AGENT_ID = (os.getenv("STAR_OFFICE_TARGET_AGENT") or "coding_bot").strip() or "coding_bot"
+DISPLAY_NAME = (os.getenv("STAR_OFFICE_DISPLAY_NAME") or TARGET_AGENT_ID).strip() or TARGET_AGENT_ID
+ADAPTER_ID = (os.getenv("STAR_OFFICE_ADAPTER_ID") or f"openclaw_{TARGET_AGENT_ID}").strip() or f"openclaw_{TARGET_AGENT_ID}"
+ADAPTER_CACHE_FILE = ROOT / "memory" / f"openclaw-{TARGET_AGENT_ID}-adapter-cache.json"
 
 # Heuristic thresholds (observation-mode tuning points)
 ERROR_ABORT_WINDOW_SEC = 30 * 60
@@ -35,7 +37,7 @@ VERY_RECENT_WORKING_SEC = 20
 WAITING_RECENT_WINDOW_SEC = 90
 
 PUSH_ENABLED = os.getenv("STAR_OFFICE_PUSH_ENABLED", "1") != "0"
-PUSH_URL = os.getenv("STAR_OFFICE_PUSH_URL", "http://127.0.0.1:18793/openclaw/coding-bot-status")
+PUSH_URL = os.getenv("STAR_OFFICE_PUSH_URL", "http://127.0.0.1:18793/openclaw/agent-status")
 PUSH_TIMEOUT_SEC = float(os.getenv("STAR_OFFICE_PUSH_TIMEOUT_SEC", "1.5"))
 PUSH_TOKEN = os.getenv("STAR_OFFICE_PUSH_TOKEN", "").strip()
 PUSH_MERGE_TTL_SEC = int(os.getenv("STAR_OFFICE_PUSH_TTL_SEC", "45"))
@@ -58,7 +60,7 @@ def push_status_event(event: str, status: str, minimal: Dict[str, Any], key: str
 
     payload = {
         "source": "openclaw_coding_bot_adapter",
-        "agent_id": "coding_bot",
+        "agent_id": TARGET_AGENT_ID,
         "event": event,
         "status": status,
         "observed_status": minimal.get("status"),
@@ -104,9 +106,9 @@ def apply_push_overlay(minimal: Dict[str, Any], cache: Dict[str, Any]) -> Dict[s
 
 
 def run_openclaw_sessions() -> Dict[str, Any]:
-    # NOTE: --all-agents can omit some coding_bot subagent keys in practice.
-    # For this adapter we query coding_bot store directly.
-    cmd = ["openclaw", "sessions", "--agent", "coding_bot", "--json"]
+    # NOTE: --all-agents can omit some subagent keys in practice.
+    # For this adapter we query the selected agent store directly.
+    cmd = ["openclaw", "sessions", "--agent", TARGET_AGENT_ID, "--json"]
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:
         raise RuntimeError((proc.stderr or proc.stdout or "openclaw sessions failed").strip())
@@ -127,10 +129,10 @@ def save_cache(cache: Dict[str, Any]) -> None:
     ADAPTER_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def pick_latest_coding_bot_session(payload: Dict[str, Any]) -> Tuple[Optional[Dict[str, Any]], List[Dict[str, Any]]]:
+def pick_latest_target_session(payload: Dict[str, Any]) -> Tuple[Optional[Dict[str, Any]], List[Dict[str, Any]]]:
     sessions = payload.get("sessions") or []
-    cands = [s for s in sessions if s.get("agentId") == "coding_bot"]
-    # noise reduction: drop lightweight coordination key agent:coding_bot:main when possible
+    cands = [s for s in sessions if s.get("agentId") == TARGET_AGENT_ID]
+    # noise reduction: drop lightweight coordination key agent:<id>:main when possible
     filtered = [s for s in cands if not str(s.get("key", "")).endswith(":main")]
     pool = filtered if filtered else cands
     if not pool:
@@ -143,7 +145,7 @@ def map_to_minimal_schema(latest: Optional[Dict[str, Any]], all_cands: List[Dict
     # status set requested by user: idle | working | waiting | error
     if poll_error:
         return {
-            "name": "coding_bot",
+            "name": DISPLAY_NAME,
             "role": "dev",
             "status": "error",
             "task": f"OpenClaw 세션 조회 실패: {poll_error[:80]}",
@@ -152,7 +154,7 @@ def map_to_minimal_schema(latest: Optional[Dict[str, Any]], all_cands: List[Dict
 
     if not latest:
         return {
-            "name": "coding_bot",
+            "name": DISPLAY_NAME,
             "role": "dev",
             "status": "idle",
             "task": "활성 작업 세션 없음",
@@ -163,7 +165,7 @@ def map_to_minimal_schema(latest: Optional[Dict[str, Any]], all_cands: List[Dict
     for s in all_cands:
         if bool(s.get("abortedLastRun", False)) and int(s.get("ageMs") or 10**12) <= ERROR_ABORT_WINDOW_SEC * 1000:
             return {
-                "name": "coding_bot",
+                "name": DISPLAY_NAME,
                 "role": "dev",
                 "status": "error",
                 "task": f"최근 실행 중단 감지 · {s.get('key', 'unknown')}",
@@ -221,7 +223,7 @@ def map_to_minimal_schema(latest: Optional[Dict[str, Any]], all_cands: List[Dict
     }
 
     return {
-        "name": "coding_bot",
+        "name": DISPLAY_NAME,
         "role": "dev",
         "status": status,
         "task": task,
@@ -310,15 +312,23 @@ def upsert_adapter_agent(minimal: Dict[str, Any]) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="OpenClaw coding_bot -> Star-Office adapter (spike)")
+    p = argparse.ArgumentParser(description="OpenClaw target-agent -> Star-Office adapter")
     p.add_argument("--interval", type=int, default=15, help="poll interval seconds")
     p.add_argument("--once", action="store_true", help="run once and exit")
     p.add_argument("--mock-status", choices=["idle", "working", "waiting", "error"], help="force fixed mock status")
+    p.add_argument("--target-agent", default=TARGET_AGENT_ID, help="OpenClaw agent id to observe (default: env STAR_OFFICE_TARGET_AGENT or coding_bot)")
+    p.add_argument("--display-name", default=DISPLAY_NAME, help="Name shown in Star Office guest list")
+    p.add_argument("--adapter-id", default=ADAPTER_ID, help="Internal guest agentId used in Star Office")
     return p.parse_args()
 
 
 def main() -> int:
+    global TARGET_AGENT_ID, DISPLAY_NAME, ADAPTER_ID, ADAPTER_CACHE_FILE
     args = parse_args()
+    TARGET_AGENT_ID = (args.target_agent or TARGET_AGENT_ID).strip() or TARGET_AGENT_ID
+    DISPLAY_NAME = (args.display_name or DISPLAY_NAME).strip() or TARGET_AGENT_ID
+    ADAPTER_ID = (args.adapter_id or ADAPTER_ID).strip() or f"openclaw_{TARGET_AGENT_ID}"
+    ADAPTER_CACHE_FILE = ROOT / "memory" / f"openclaw-{TARGET_AGENT_ID}-adapter-cache.json"
 
     while True:
         poll_error = None
@@ -327,7 +337,7 @@ def main() -> int:
         cache = load_cache()
         try:
             payload = run_openclaw_sessions()
-            latest, all_cands = pick_latest_coding_bot_session(payload)
+            latest, all_cands = pick_latest_target_session(payload)
         except Exception as e:
             poll_error = str(e)
 
