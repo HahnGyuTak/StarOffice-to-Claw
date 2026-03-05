@@ -52,9 +52,9 @@ Python/Pillow 환경이 필요합니다(보통 프로젝트 기본 환경에서 
 
 | assetType (파일명 prefix) | 의미(사용자 관점) | 프레임별 픽셀 크기 | 권장 그리드 (cols×rows) | 권장 총 시트 픽셀 크기 (가로×세로) | 최종 적용 파일 |
 |---|---|---:|---:|---:|---|
-| `star-idle` | **쉬는 상태** 캐릭터 | 256×256 | 8×6 | 2048×1536 | `frontend/star-idle-v5.png` |
+| `star-idle` | **대기 상태** 캐릭터 | 256×256 | 8×6 | 2048×1536 | `frontend/star-idle-v5.png` |
 | `star-working-spritesheet-grid` | **작업 상태** 애니메이션 | 300×300 | 8×5 *(권장 예시)* | 2400×1500 *(권장 예시)* | `frontend/star-working-spritesheet-grid.webp` |
-| `sync-animation-v3-grid` | **대기 상태**(동기화/대기 연출) | 256×256 | 9×5 *(권장 예시)* | 2304×1280 *(권장 예시)* | `frontend/sync-animation-v3-grid.webp` |
+| `sync-animation-v3-grid` | **쉬는 상태**(동기화/휴식 연출) | 256×256 | 9×5 *(권장 예시)* | 2304×1280 *(권장 예시)* | `frontend/sync-animation-v3-grid.webp` |
 | `error-bug-spritesheet-grid` | **에러 상태** 애니메이션 | 220×220 | 11×4 *(권장 예시)* | 2420×880 *(권장 예시)* | `frontend/error-bug-spritesheet-grid.webp` |
 
 권장 확장자:
