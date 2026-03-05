@@ -19,24 +19,24 @@
 
 ## 2) License / Notice
 
-- 코드 라이선스는 원본 정책을 따릅니다. 자세한 내용은 `LICENSE`를 확인하세요.
+- 코드 라이선스는 원본 정책을 따릅니다. 자세한 내용은 [`LICENSE`](./LICENSE)를 확인하세요.
 - 본 레포는 원본 라이선스 및 크레딧을 유지하며, 파생 변경 사항만 별도로 문서화합니다.
 - 상업적 사용 제한이 걸린 아트 에셋 관련 고지는 원본/프로젝트 문서의 가이드를 준수하세요.
 
-참고: `NOTICE` 파일에 업스트림 및 파생 작업 고지를 함께 제공합니다.
+참고: [`NOTICE`](./NOTICE) 파일에 업스트림 및 파생 작업 고지를 함께 제공합니다.
 
 ---
 
 ## 3) What changed vs upstream (핵심 변경점)
 
 ### A. OpenClaw 연동 확장
-- `openclaw_coding_bot_adapter.py` 추가
+- [`openclaw_coding_bot_adapter.py`](./openclaw_coding_bot_adapter.py) 추가
 - OpenClaw 세션을 읽어 `idle/working/waiting/error` 상태로 매핑
 - task 시작/종료 이벤트 기반 푸시 + TTL 병합 로직 추가
 - OpenClaw 세션 추적 기반 실시간 연동 방법은 [SKILL.md](./SKILL.md)에 사용자 가이드로 정리
 
 ### B. 백엔드 상태/엔드포인트 강화
-- `backend/app.py` 확장
+- [`backend/app.py`](./backend/app.py) 확장
 - `waiting` 상태 추가 및 상태 정규화 로직 보강
 - `/openclaw/agent-status` 엔드포인트 추가(구형 `/openclaw/coding-bot-status` 호환, 옵션 토큰 인증)
 - 게스트 join/push/offline 처리 로직 개선
@@ -46,9 +46,10 @@
 - 변형 에셋 검증/리팩/적용 스크립트 도입 ([`apply_variant.py`](./tools/asset_pipeline/apply_variant.py), [`parse_and_validate.py`](./tools/asset_pipeline/parse_and_validate.py), [`repack_to_canonical.py`](./tools/asset_pipeline/repack_to_canonical.py))
 - [`tmp_assets/`](./tmp_assets/)를 통한 실험/교체 자산 운용
 - 배경 생성/복구/히스토리/즐겨찾기 흐름 강화 (서버 로직: [`backend/app.py`](./backend/app.py), 즐겨찾기 저장 경로: [`assets/home-favorites/`](./assets/home-favorites/))
+- 에셋 꾸미기/교체를 실제로 따라하는 사용자 가이드는 [`CUSTOM_ASSETS.md`](./CUSTOM_ASSETS.md) 참고
 
 ### D. UI/UX 개편
-- `frontend/index.html`, `frontend/game.js`, `frontend/layout.js` 등 대규모 수정
+- [`frontend/index.html`](./frontend/index.html), [`frontend/game.js`](./frontend/game.js), [`frontend/layout.js`](./frontend/layout.js) 등 대규모 수정
 - 다국어/모바일 대응 및 드로어 UX 개선
 - 상태 스프라이트/애니메이션 에셋 교체
 
@@ -70,6 +71,6 @@
 
 ## 5) Included reference files
 
-- `README.upstream.original.md` : 업스트림 원본 README 보관본
-- `README.previous.custom.md` : 초기 커스텀 README 백업
+- [`README.upstream.original.md`](./README.upstream.original.md) : 업스트림 원본 README 보관본
+- [`README.previous.custom.md`](./README.previous.custom.md) : 초기 커스텀 README 백업
 
