@@ -33,6 +33,7 @@
 - `openclaw_coding_bot_adapter.py` 추가
 - OpenClaw 세션을 읽어 `idle/working/waiting/error` 상태로 매핑
 - task 시작/종료 이벤트 기반 푸시 + TTL 병합 로직 추가
+- OpenClaw 세션 추적 기반 실시간 연동 방법은 `SKILL.md`에 사용자 가이드로 정리
 
 ### B. 백엔드 상태/엔드포인트 강화
 - `backend/app.py` 확장
