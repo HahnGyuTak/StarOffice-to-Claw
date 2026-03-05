@@ -57,9 +57,37 @@
 - 변경 관찰/운영 노트 문서 추가
 - 커스텀 변경 근거와 흐름을 재현 가능하게 정리
 
+### F. 상태-영역-에셋 최종 매핑 (Round2 기준)
+
+| 표준 상태 | 내부 호환 키(legacy) | 영역(area) | 메인 에셋(asset) |
+|---|---|---|---|
+| idle | idle, waiting | breakroom | `idle-asset-grid` |
+| working | writing, researching, executing | writing | `working-asset-grid` |
+| rest | syncing | writing (렌더링은 우하단 고정) | `rest-asset-grid` |
+| error | error | error | `error-asset-grid` |
+
+> 참고: 내부 상태 키는 호환을 위해 유지되며, UI/문서 표기는 `idle / working / rest / error`를 기준으로 합니다.
+
 ---
 
-## 4) Repository intent
+## 4) Office name policy (English-only)
+
+사무실 이름은 언어 모드와 관계없이 **영어 단일 값**으로 통일합니다.
+
+- Default: `Star Office`
+- Current custom: `Hahn Office`
+
+현재 구현은 프론트에서 아래 우선순위로 이름을 결정합니다.
+1. `window.STAR_OFFICE_NAME` (런타임 오버라이드)
+2. `CUSTOM_OFFICE_NAME` (코드 기본 커스텀값)
+3. `DEFAULT_OFFICE_NAME` (`Star Office`)
+
+적용 위치:
+- 로딩 텍스트
+- 게임 내 명패(plaque) 텍스트
+- `officeTitle` 번역 키 출력값(언어와 무관하게 동일 영어명)
+
+## 5) Repository intent
 
 이 저장소의 목적은 다음 두 가지입니다.
 1. 원본 대비 변경점을 투명하게 기록
@@ -69,7 +97,7 @@
 
 ---
 
-## 5) Included reference files
+## 6) Included reference files
 
 - [`README.upstream.original.md`](./README.upstream.original.md) : 업스트림 원본 README 보관본
 - [`README.previous.custom.md`](./README.previous.custom.md) : 초기 커스텀 README 백업
