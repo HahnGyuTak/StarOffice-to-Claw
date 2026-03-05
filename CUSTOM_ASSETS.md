@@ -50,12 +50,12 @@ Python/Pillow 환경이 필요합니다(보통 프로젝트 기본 환경에서 
 
 현재 파이프라인의 canonical 대상은 아래 4종입니다.
 
-| assetType (파일명 prefix) | 의미(사용자 관점) | 프레임별 픽셀 크기 | 권장 그리드 (cols×rows) | 권장 총 시트 픽셀 크기 (가로×세로) | 최종 적용 파일 |
+| state (파일명 prefix) | 의미(사용자 관점) | 프레임별 픽셀 크기 | 권장 그리드 (cols×rows) | 권장 총 시트 픽셀 크기 (가로×세로) | 최종 적용 파일 |
 |---|---|---:|---:|---:|---|
-| `star-idle` | **대기 상태** 캐릭터 | 256×256 | 8×6 | 2048×1536 | `frontend/star-idle-v5.png` |
-| `star-working-spritesheet-grid` | **작업 상태** 애니메이션 | 300×300 | 8×5 *(권장 예시)* | 2400×1500 *(권장 예시)* | `frontend/star-working-spritesheet-grid.webp` |
-| `sync-animation-v3-grid` | **쉬는 상태**(동기화/휴식 연출) | 256×256 | 9×5 *(권장 예시)* | 2304×1280 *(권장 예시)* | `frontend/sync-animation-v3-grid.webp` |
-| `error-bug-spritesheet-grid` | **에러 상태** 애니메이션 | 220×220 | 11×4 *(권장 예시)* | 2420×880 *(권장 예시)* | `frontend/error-bug-spritesheet-grid.webp` |
+| `idle` | **대기 상태** 캐릭터 | 256×256 | 8×6 | 2048×1536 | `frontend/idle-asset-grid.png` |
+| `working` | **작업 상태** 애니메이션 | 300×300 | 8×5 *(권장 예시)* | 2400×1500 *(권장 예시)* | `frontend/working-asset-grid.webp` |
+| `rest` | **쉬는 상태**(동기화/휴식 연출) | 256×256 | 9×5 *(권장 예시)* | 2304×1280 *(권장 예시)* | `frontend/rest-asset-grid.webp` |
+| `error` | **에러 상태** 애니메이션 | 220×220 | 11×4 *(권장 예시)* | 2420×880 *(권장 예시)* | `frontend/error-asset-grid.webp` |
 
 권장 확장자:
 - 입력(`tmp_assets`): `.png` 또는 `.webp`
@@ -73,18 +73,27 @@ Python/Pillow 환경이 필요합니다(보통 프로젝트 기본 환경에서 
 `tmp_assets/`에 넣을 때 파일명은 아래 형식을 지켜야 합니다.
 
 ```text
-<assetType>-<variant>__c<cols>_r<rows>.<ext>
+<state>-asset-grid-<variant>__c<cols>_r<rows>.<ext>
 ```
 
-예시:
+예시(신규):
+```text
+idle-asset-grid-akaja__c8_r6.png
+working-asset-grid-akaja__c8_r5.webp
+rest-asset-grid-akaja__c9_r5.png
+error-asset-grid-akaja__c11_r4.png
+```
+
+레거시 파일명도 파싱은 유지됩니다:
 ```text
 star-idle-akaja__c8_r6.png
+star-working-spritesheet-grid-akaja__c10_r5.png
 sync-animation-v3-grid-akaja__c9_r5.png
 error-bug-spritesheet-grid-akaja__c11_r4.png
 ```
 
 의미:
-- `assetType`: 위 표의 타입 이름
+- `state`: `idle | working | rest | error`
 - `variant`: 내가 붙이는 버전 이름(예: `akaja`, `v2`, `mytheme`)
 - `c<cols>_r<rows>`: 스프라이트 시트의 열/행 개수
 - `ext`: png/webp
