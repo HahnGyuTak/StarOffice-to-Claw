@@ -1000,7 +1000,7 @@
 <body>
     <!-- EN -->
     <div id="loading-overlay">
-        <div id="loading-text">Loading Star’s pixel office...</div>
+        <div id="loading-text">Loading Hahn Office...</div>
         <div id="loading-progress-container">
             <div id="loading-progress-bar"></div>
         </div>
@@ -1030,7 +1030,7 @@
             <div id="control-buttons">
                 <button id="btn-state-idle" onclick="setState('idle','Idle')">Idle</button>
                 <button id="btn-state-writing" onclick="setState('writing','Working')">Work</button>
-                <button id="btn-state-syncing" onclick="setState('syncing','Syncing')">Sync</button>
+                <button id="btn-state-syncing" onclick="setState('syncing','Resting')">Rest</button>
                 <button id="btn-state-error" onclick="setState('error','Alerting')">Alert</button>
                 <button id="btn-open-drawer" onclick="toggleAssetDrawer()">EN</button>
             </div>
@@ -1190,7 +1190,7 @@
             },
             en: {
                 controlTitle: 'Star Status',
-                btnIdle: 'Idle', btnWork: 'Work', btnSync: 'Sync', btnError: 'Alert', btnDecor: 'Decorate Room',
+                btnIdle: 'Idle', btnWork: 'Working', btnSync: 'Rest', btnError: 'Error', btnDecor: 'Decorate Room',
                 drawerTitle: 'Decorate Room · Asset Sidebar', drawerClose: 'Close',
                 authTitle: 'Enter Decor Passcode', authPlaceholder: 'Enter passcode', authVerify: 'Verify', authDefaultPassHint: 'Default passcode: 1234 (ask me anytime to change it; stronger passcode recommended)',
                 drawerVisibilityTip: 'Visibility: use the eye button on each row to hide/show that asset',
@@ -1218,7 +1218,7 @@
             },
             ko: {
                 controlTitle: 'Star 상태',
-                btnIdle: '대기', btnWork: '작업', btnSync: '동기화', btnError: '경고', btnDecor: '방 꾸미기',
+                btnIdle: '대기', btnWork: '작업', btnSync: '휴식', btnError: '오류', btnDecor: '방 꾸미기',
                 drawerTitle: '방 꾸미기 · 에셋 사이드바', drawerClose: '닫기',
                 authTitle: '꾸미기 비밀번호 입력', authPlaceholder: '비밀번호 입력', authVerify: '확인', authDefaultPassHint: '기본 비밀번호: 1234 (원하시면 언제든 변경해드려요. 더 강한 비밀번호를 권장합니다)',
                 drawerVisibilityTip: '표시 상태: 각 행의 눈 버튼으로 해당 에셋을 숨기거나 표시할 수 있어요',
@@ -1274,11 +1274,18 @@
             }
         };
 
-        function t(key) { return (I18N[uiLang] && I18N[uiLang][key]) || key; }
+        const DEFAULT_OFFICE_NAME = 'Star Office';
+        const CUSTOM_OFFICE_NAME = 'Hahn Office';
+        const OFFICE_NAME = ((window.STAR_OFFICE_NAME || CUSTOM_OFFICE_NAME || DEFAULT_OFFICE_NAME) + '').trim() || DEFAULT_OFFICE_NAME;
+
+        function t(key) {
+            if (key === 'officeTitle') return OFFICE_NAME;
+            return (I18N[uiLang] && I18N[uiLang][key]) || key;
+        }
         function renderBootLoadingText(percent) {
             const loadingEl = document.getElementById('loading-text');
             if (!loadingEl) return;
-            const base = t('loadingOffice');
+            const base = `Loading ${OFFICE_NAME}...`;
             const p = Number.isFinite(percent) ? ` ${Math.max(0, Math.min(100, Math.round(percent)))}%` : '';
             loadingEl.textContent = `${base}${p}`;
         }
@@ -1577,27 +1584,25 @@
         
         // EN（EN：EN）
 
-        // Explicit policy for resolved state -> movement area.
-        // idle: original bed/rest zone, waiting: sofa/breakroom waiting zone.
-        const RESOLVED_STATE_AREA_MAP = Object.freeze({
-            idle: 'syncing',
-            waiting: 'breakroom',
-            writing: 'writing',
-            researching: 'researching',
-            executing: 'writing',
-            syncing: 'syncing',
-            error: 'error'
+        // Single source of truth: state -> area + core asset mapping
+        const STATE_AREA_ASSET_MAP = Object.freeze({
+            idle: { name: 'Idle', area: 'breakroom', asset: 'idle-asset-grid' },
+            waiting: { name: 'Waiting', area: 'breakroom', asset: 'idle-asset-grid' },
+            writing: { name: 'Working on tasks', area: 'writing', asset: 'working-asset-grid' },
+            researching: { name: 'Searching info', area: 'writing', asset: 'working-asset-grid' },
+            executing: { name: 'Executing task', area: 'writing', asset: 'working-asset-grid' },
+            // syncing(legacy key): render rest asset at fixed bottom-right while keeping area=writing
+            syncing: { name: 'Resting / syncing', area: 'writing', asset: 'rest-asset-grid' },
+            error: { name: 'Error occurred', area: 'error', asset: 'error-asset-grid' }
         });
 
-        const STATES = {
-            idle: { name: 'Idle', area: RESOLVED_STATE_AREA_MAP.idle },
-            waiting: { name: 'Waiting', area: RESOLVED_STATE_AREA_MAP.waiting },
-            writing: { name: 'Organizing docs', area: RESOLVED_STATE_AREA_MAP.writing },
-            researching: { name: 'Searching info', area: RESOLVED_STATE_AREA_MAP.researching },
-            executing: { name: 'Executing task', area: RESOLVED_STATE_AREA_MAP.executing },
-            syncing: { name: 'Syncing backup', area: RESOLVED_STATE_AREA_MAP.syncing },
-            error: { name: 'Error occurred', area: RESOLVED_STATE_AREA_MAP.error }
-        };
+        const RESOLVED_STATE_AREA_MAP = Object.freeze(Object.fromEntries(
+            Object.entries(STATE_AREA_ASSET_MAP).map(([k, v]) => [k, v.area])
+        ));
+
+        const STATES = Object.freeze(Object.fromEntries(
+            Object.entries(STATE_AREA_ASSET_MAP).map(([k, v]) => [k, { name: v.name, area: v.area }])
+        ));
 
         const BUBBLE_TEXTS = {
             zh: {
@@ -1817,11 +1822,11 @@
             const lang = (uiLang || 'zh');
             const nameMap = {
                 zh: {
-                    'star-idle-v5': 'EN·IdleEN',
-                    'star-working-spritesheet-grid': 'EN·WorkEN',
+                    'idle-asset-grid': 'EN·IdleEN',
+                    'working-asset-grid': 'EN·WorkEN',
                     'sync-animation': 'EN·SyncEN',
-                    'sync-animation-v3-grid': 'EN·SyncEN',
-                    'error-bug-spritesheet-grid': 'EN·EN',
+                    'rest-asset-grid': 'EN·SyncEN',
+                    'error-asset-grid': 'EN·EN',
                     'cats-spritesheet': 'EN',
                     'coffee-machine-v3-grid': 'EN',
                     'coffee-machine-shadow-v1': 'EN',
@@ -1841,11 +1846,11 @@
                     'guest_anim_6': 'GuestEN 6'
                 },
                 en: {
-                    'star-idle-v5': 'Main · Idle',
-                    'star-working-spritesheet-grid': 'Main · Working',
-                    'sync-animation': 'Main · Syncing',
-                    'sync-animation-v3-grid': 'Main · Syncing',
-                    'error-bug-spritesheet-grid': 'Main · Error',
+                    'idle-asset-grid': 'Main · Idle',
+                    'working-asset-grid': 'Main · Working',
+                    'sync-animation': 'Main · Rest',
+                    'rest-asset-grid': 'Main · Rest',
+                    'error-asset-grid': 'Main · Error',
                     'cats-spritesheet': 'Random Cats',
                     'coffee-machine-v3-grid': 'Coffee Machine',
                     'coffee-machine-shadow-v1': 'Coffee Machine Shadow',
@@ -1865,11 +1870,11 @@
                     'guest_anim_6': 'Guest Animation 6'
                 },
                 ja: {
-                    'star-idle-v5': 'メイン・EN',
-                    'star-working-spritesheet-grid': 'メイン・EN',
+                    'idle-asset-grid': 'メイン・EN',
+                    'working-asset-grid': 'メイン・EN',
                     'sync-animation': 'メイン・EN',
-                    'sync-animation-v3-grid': 'メイン・EN',
-                    'error-bug-spritesheet-grid': 'メイン・エラーEN',
+                    'rest-asset-grid': 'メイン・EN',
+                    'error-asset-grid': 'メイン・エラーEN',
                     'cats-spritesheet': 'ランダムEN',
                     'coffee-machine-v3-grid': 'コーヒーマシン',
                     'coffee-machine-shadow-v1': 'コーヒーマシンEN',
@@ -1897,11 +1902,11 @@
             zh: {
                 'office_bg_small': 'EN（EN）。EN 1280×720（16:9），EN，EN。',
                 'office_bg': 'EN。EN，EN office_bg_small EN。',
-                'star-idle-v5': 'EN。EN 256×256 EN，EN。',
-                'star-working-spritesheet-grid': 'ENWorkEN（EN）。EN 300×300 EN，EN。',
+                'idle-asset-grid': 'EN。EN 256×256 EN，EN。',
+                'working-asset-grid': 'ENWorkEN（EN）。EN 300×300 EN，EN。',
                 'sync-animation': 'SyncEN（EN）。EN 256×256 EN，ENSyncEN。',
-                'sync-animation-v3-grid': 'SyncEN（EN）。EN 256×256 ENSyncEN。',
-                'error-bug-spritesheet-grid': 'EN。EN 220×220 EN，EN。',
+                'rest-asset-grid': 'SyncEN（EN）。EN 256×256 ENSyncEN。',
+                'error-asset-grid': 'EN。EN 220×220 EN，EN。',
                 'desk-v3': 'EN。EN，EN。',
                 'desk': 'EN（EN）。EN desk-v3 EN，EN。',
                 'sofa-idle-v3': 'EN。EN 256×256 EN，EN。',
@@ -1930,11 +1935,11 @@
             en: {
                 'office_bg_small': 'Primary room background (active). Use 1280×720 (16:9), keep room structure/perspective to avoid character misalignment.',
                 'office_bg': 'Legacy backup background. Usually not directly active; keep composition aligned with office_bg_small for rollback.',
-                'star-idle-v5': 'Main idle spritesheet. Keep 256×256 frame size and grid layout, or idle animation will break.',
-                'star-working-spritesheet-grid': 'Main working spritesheet (desk state). Keep 300×300 frames; preserve visual center/anchor.',
-                'sync-animation': 'Sync-state asset (currently referenced). Follow 256×256 frame spec to avoid static/jitter sync visuals.',
-                'sync-animation-v3-grid': 'Sync spritesheet (compat resource). Keep 256×256 grid for sync animation replacement.',
-                'error-bug-spritesheet-grid': 'Error-state spritesheet. Keep 220×220 frames; high contrast helps warning readability.',
+                'idle-asset-grid': 'Main idle spritesheet. Keep 256×256 frame size and grid layout, or idle animation will break.',
+                'working-asset-grid': 'Main working spritesheet (desk state). Keep 300×300 frames; preserve visual center/anchor.',
+                'sync-animation': 'Rest-state animation asset (legacy alias). Keep 256×256 frames to avoid static/jitter visuals.',
+                'rest-asset-grid': 'Rest-state spritesheet (active). Keep a 256×256 grid for stable rest animation replacement.',
+                'error-asset-grid': 'Error-state spritesheet. Keep 220×220 frames; high contrast helps warning readability.',
                 'desk-v3': 'Desk foreground layer. Controls overlap with character; keep ratio and visual anchor stable.',
                 'desk': 'Legacy desk asset (compatibility). Keep size/anchor close to desk-v3 to avoid overlap issues.',
                 'sofa-idle-v3': 'Static sofa asset. Keep 256×256 and transparent background to prevent position drift.',
@@ -1963,11 +1968,11 @@
             ja: {
                 'office_bg_small': 'メインEN（EN）。1280×720（16:9）EN。ENとENをENし、キャラのENズレをENいでください。',
                 'office_bg': 'ENのバックアップ。ENはENされません。office_bg_small とENでENするとENしやすいです。',
-                'star-idle-v5': 'メインENスプライトシート。256×256 ENとグリッドENをENしないとENアニメがENれます。',
-                'star-working-spritesheet-grid': 'メインENスプライトシート（デスクEN）。300×300 ENをENし、ENをENえてください。',
+                'idle-asset-grid': 'メインENスプライトシート。256×256 ENとグリッドENをENしないとENアニメがENれます。',
+                'working-asset-grid': 'メインENスプライトシート（デスクEN）。300×300 ENをENし、ENをENえてください。',
                 'sync-animation': 'EN（EN）。256×256 ENをENるとEN/ガタつきをENできます。',
-                'sync-animation-v3-grid': 'ENスプライトシート（EN）。256×256 グリッドENでENをENしENえENです。',
-                'error-bug-spritesheet-grid': 'エラーENスプライトシート。220×220 ENをENし、ENのENいENをEN。',
+                'rest-asset-grid': 'ENスプライトシート（EN）。256×256 グリッドENでENをENしENえENです。',
+                'error-asset-grid': 'エラーENスプライトシート。220×220 ENをENし、ENのENいENをEN。',
                 'desk-v3': 'デスクENレイヤー。キャラとのENにENするため、ENとENアンカーをENしてください。',
                 'desk': 'ENデスクEN（EN）。desk-v3 にENいサイズ/アンカーでENしENえるとENれにくいです。',
                 'sofa-idle-v3': 'ソファEN。256×256 とENをENし、ENズレをENいでください。',
@@ -2018,12 +2023,19 @@
                 .join('');
         }
 
+        const STATE_ASSET_FILES = {
+            idle: 'idle-asset-grid.png',
+            working: 'working-asset-grid.webp',
+            rest: 'rest-asset-grid.webp',
+            error: 'error-asset-grid.webp',
+        };
+
         function pathToTextureCandidates(path) {
             const file = (path || '').split('/').pop() || '';
             const stem = file.replace(/\.[^.]+$/, '');
             const map = {
                 'office_bg_small': 'office_bg',
-                'star-idle-v5': 'star_idle',
+                'idle-asset-grid': 'star_idle',
                 'sofa-idle-v3': 'sofa_idle',
                 'sofa-shadow-v1': 'sofa_shadow',
                 'plants-spritesheet': 'plants',
@@ -2031,12 +2043,12 @@
                 'coffee-machine-v3-grid': 'coffee_machine',
                 'coffee-machine-shadow-v1': 'coffee_machine_shadow',
                 'serverroom-spritesheet': 'serverroom',
-                'error-bug-spritesheet-grid': 'error_bug',
+                'error-asset-grid': 'error_bug',
                 'cats-spritesheet': 'cats',
                 'desk-v3': 'desk_v2',
                 'desk': 'desk',
-                'star-working-spritesheet-grid': 'star_working',
-                'sync-animation-v3-grid': 'sync_anim',
+                'working-asset-grid': 'star_working',
+                'rest-asset-grid': 'sync_anim',
                 'memo-bg': 'memo_bg',
                 'flowers-bloom-v2': 'flowers',
             };
@@ -2063,7 +2075,7 @@
             if (!key) return null;
             const keyToStem = {
                 office_bg: 'office_bg_small',
-                star_idle: 'star-idle-v5',
+                star_idle: 'idle-asset-grid',
                 sofa_idle: 'sofa-idle-v3',
                 sofa_shadow: 'sofa-shadow-v1',
                 plants: 'plants-spritesheet',
@@ -2071,12 +2083,12 @@
                 coffee_machine: 'coffee-machine-v3-grid',
                 coffee_machine_shadow: 'coffee-machine-shadow-v1',
                 serverroom: 'serverroom-spritesheet',
-                error_bug: 'error-bug-spritesheet-grid',
+                error_bug: 'error-asset-grid',
                 cats: 'cats-spritesheet',
                 desk_v2: 'desk-v3',
                 desk: 'desk',
-                star_working: 'star-working-spritesheet-grid',
-                sync_anim: 'sync-animation-v3-grid',
+                star_working: 'working-asset-grid',
+                sync_anim: 'rest-asset-grid',
                 memo_bg: 'memo-bg',
                 flowers: 'flowers-bloom-v2',
             };
@@ -2312,10 +2324,10 @@
             const p = (path || '').toLowerCase();
             // EN（EN）
             const hints = [
-                [/star-working-spritesheet-grid\.webp$/, 300, 300],
-                [/star-idle-v5\.(webp|png)$/, 256, 256],
-                [/sync-animation-v3-grid\.webp$/, 256, 256],
-                [/error-bug-spritesheet-grid\.webp$/, 220, 220],
+                [/working-asset-grid\.webp$/, 300, 300],
+                [/idle-asset-grid\.(webp|png)$/, 256, 256],
+                [/rest-asset-grid\.webp$/, 256, 256],
+                [/error-asset-grid\.webp$/, 220, 220],
                 [/flowers-bloom-v2\.webp$/, 128, 128],
                 [/plants-spritesheet\.webp$/, 160, 160]
             ];
@@ -2437,10 +2449,10 @@
             const baseRows = assetListData.map(it => ({ ...it, key: '' }));
 
             const statePriority = [
-                'star-idle-v5.png',
-                'star-working-spritesheet-grid.webp',
-                'sync-animation-v3-grid.webp',
-                'error-bug-spritesheet-grid.webp'
+                'idle-asset-grid.png',
+                'working-asset-grid.webp',
+                'rest-asset-grid.webp',
+                'error-asset-grid.webp'
             ];
             const assetRank = (path='') => {
                 const p = (path || '').toLowerCase();
@@ -3394,7 +3406,7 @@ function toggleBrokerPanel() {
 
         function getPrimaryAvatarAnchor() {
             const state = getEffectiveResolvedState();
-            if ((state === 'idle' || state === 'syncing') && syncAnimSprite && syncAnimSprite.visible) return syncAnimSprite;
+            if (state === 'syncing' && syncAnimSprite && syncAnimSprite.visible) return syncAnimSprite;
             if (state === 'error' && window.errorBug && window.errorBug.visible) return window.errorBug;
             if ((state === 'writing' || state === 'researching' || state === 'executing') && window.starWorking && window.starWorking.visible) return window.starWorking;
             if (star && star.visible) return star;
@@ -3575,11 +3587,11 @@ function toggleBrokerPanel() {
                 const isDemo = !!agent.isDemo || (DEMO_MODE && (id === 'demo_nika' || id === 'demo_mercury' || agent.name === 'EN' || agent.name === 'EN'));
                 const area = agent.area || (
                     agent.state === 'error' ? 'error' :
-                    agent.state === 'syncing' ? 'syncing' :
+                    agent.state === 'syncing' ? 'writing' :
                     (agent.state === 'idle' || agent.state === 'waiting') ? 'breakroom' : 'writing'
                 );
 
-                const idx = area === 'breakroom' ? idxBreak++ : area === 'syncing' ? idxSync++ : area === 'error' ? idxError++ : idxWrite++;
+                const idx = area === 'breakroom' ? idxBreak++ : area === 'error' ? idxError++ : idxWrite++;
                 const p = isDemo
                     ? randomPointInRect(getAreaRect(area))
                     : getAreaPoint(area, idx);
@@ -4055,7 +4067,7 @@ function toggleBrokerPanel() {
             // cache-busting to avoid stale background on client/CDN
             // use smaller/new map version provided by user
             this.load.image('office_bg', '/static/office_bg_small.webp?v={{VERSION_TIMESTAMP}}');
-            this.load.spritesheet('star_idle', '/static/star-idle-v5.png?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
+            this.load.spritesheet('star_idle', `/static/${STATE_ASSET_FILES.idle}?v={{VERSION_TIMESTAMP}}`, { frameWidth: 256, frameHeight: 256 });
 
             // Furniture
             this.load.image('sofa_idle', '/static/sofa-idle-v3.png?v={{VERSION_TIMESTAMP}}');
@@ -4069,7 +4081,7 @@ function toggleBrokerPanel() {
             this.load.spritesheet('serverroom', '/static/serverroom-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 180, frameHeight: 251 });
 
             // Error / bug animation: 180x180, 96 frames (repacked grid)
-            this.load.spritesheet('error_bug', '/static/error-bug-spritesheet-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 220, frameHeight: 220 });
+            this.load.spritesheet('error_bug', `/static/${STATE_ASSET_FILES.error}?v={{VERSION_TIMESTAMP}}`, { frameWidth: 220, frameHeight: 220 });
 
             // EN Gemini EN（EN/EN）
             this.geminiConfig = { hasKey: false, model: 'gemini-3.1-flash-image-preview' };
@@ -4081,10 +4093,10 @@ function toggleBrokerPanel() {
             // Star working animation: repacked to grid to avoid WebGL max texture size limits
             // NOTE: prefer WebP for size, PNG fallback
             // EN：EN writing EN 300x300 EN
-            this.load.spritesheet('star_working', '/static/star-working-spritesheet-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 300, frameHeight: 300 });
+            this.load.spritesheet('star_working', `/static/${STATE_ASSET_FILES.working}?v={{VERSION_TIMESTAMP}}`, { frameWidth: 300, frameHeight: 300 });
 
             // Sync state animation (256x256, EN): ENSyncEN，SyncEN2EN
-            this.load.spritesheet('sync_anim', '/static/sync-animation-v3-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
+            this.load.spritesheet('sync_anim', `/static/${STATE_ASSET_FILES.rest}?v={{VERSION_TIMESTAMP}}`, { frameWidth: 256, frameHeight: 256 });
 
             // Memo background image
             // memo EN png，EN webp EN“EN”
@@ -4145,7 +4157,7 @@ function toggleBrokerPanel() {
                 });
             }
 
-            star = game.physics.add.sprite(areas.syncing.x, areas.syncing.y, 'star_idle');
+            star = game.physics.add.sprite(areas.breakroom.x, areas.breakroom.y, 'star_idle');
             star.setOrigin(0.5);
             star.setScale(IDLE_STAR_SCALE);
             star.setAlpha(0.95);
@@ -4697,7 +4709,7 @@ function toggleBrokerPanel() {
                     writing: 'Working on current tasks.',
                     researching: 'Researching related context.',
                     executing: 'Executing requested steps.',
-                    syncing: 'Syncing latest changes.',
+                    syncing: 'Resting (syncing latest changes).',
                     error: 'Investigating an issue.'
                 },
                 ko: {
@@ -4706,7 +4718,7 @@ function toggleBrokerPanel() {
                     writing: '현재 작업을 진행 중이에요.',
                     researching: '관련 정보를 조사 중이에요.',
                     executing: '요청된 단계를 실행 중이에요.',
-                    syncing: '최신 변경사항을 동기화 중이에요.',
+                    syncing: '휴식 상태예요 (최신 변경사항을 동기화 중).',
                     error: '문제를 확인하고 있어요.'
                 },
                 zh: {
@@ -4715,7 +4727,7 @@ function toggleBrokerPanel() {
                     writing: '正在处理当前工作。',
                     researching: '正在调研相关信息。',
                     executing: '正在执行请求步骤。',
-                    syncing: '正在同步最新变更。',
+                    syncing: '休息中（正在同步最新变更）。',
                     error: '正在排查问题。'
                 }
             };
@@ -4792,26 +4804,9 @@ function toggleBrokerPanel() {
 
                 hideAll();
 
-                if (state === 'idle') {
-                    const idleArea = areas[RESOLVED_STATE_AREA_MAP.idle] || areas.syncing;
-                    if (syncAvatar) {
-                        if (idleArea && Number.isFinite(idleArea.x) && Number.isFinite(idleArea.y)) {
-                            syncAvatar.setPosition(idleArea.x, idleArea.y);
-                        }
-                        syncAvatar.setVisible(true);
-                        syncAvatar.setAlpha(1);
-                        syncAvatar.setDepth(40);
-                        if (syncAnimPlayable) {
-                            playLoopOrFallback(syncAvatar, 'sync_anim_idle');
-                        } else {
-                            playLoopOrFallback(syncAvatar, null);
-                        }
-                    } else {
-                        ensureStarSafe(areas.syncing?.x, areas.syncing?.y);
-                    }
-                } else if (state === 'waiting') {
-                    const waitingArea = areas[RESOLVED_STATE_AREA_MAP.waiting] || areas.breakroom || IDLE_SOFA_ANCHOR;
-                    ensureStarSafe(waitingArea.x, waitingArea.y);
+                if (state === 'idle' || state === 'waiting') {
+                    const idleArea = areas[RESOLVED_STATE_AREA_MAP[state]] || areas.breakroom || IDLE_SOFA_ANCHOR;
+                    ensureStarSafe(idleArea.x, idleArea.y);
                 } else if (state === 'writing' || state === 'researching' || state === 'executing') {
                     if (workingStar) {
                         workingStar.setVisible(true);
@@ -4822,6 +4817,7 @@ function toggleBrokerPanel() {
                         ensureStarSafe(areas.writing.x, areas.writing.y);
                     }
                 } else if (state === 'syncing') {
+                    // syncing effect is fixed at bottom-right, while logical area remains 'writing'.
                     if (syncAvatar) {
                         syncAvatar.setVisible(true);
                         syncAvatar.setAlpha(1);
@@ -4832,7 +4828,7 @@ function toggleBrokerPanel() {
                             playLoopOrFallback(syncAvatar, null);
                         }
                     } else {
-                        ensureStarSafe(areas.syncing.x, areas.syncing.y);
+                        ensureStarSafe(areas.writing.x, areas.writing.y);
                     }
                 } else if (state === 'error') {
                     if (errorAvatar) {
@@ -4845,7 +4841,7 @@ function toggleBrokerPanel() {
                         ensureStarSafe(areas.error.x, areas.error.y);
                     }
                 } else {
-                    ensureStarSafe(areas.syncing.x, areas.syncing.y);
+                    ensureStarSafe(areas.breakroom.x, areas.breakroom.y);
                 }
 
                 if (!forceVisible) return;
@@ -4855,7 +4851,7 @@ function toggleBrokerPanel() {
                     if (allowDebugLog) {
                         console.warn('[avatar-guard] no main avatar visible, recovering with star idle', { state });
                     }
-                    ensureStarSafe(areas.syncing.x, areas.syncing.y);
+                    ensureStarSafe(areas.breakroom.x, areas.breakroom.y);
                 }
             },
             resolvePrimaryAnchorForBubble(stateKey) {

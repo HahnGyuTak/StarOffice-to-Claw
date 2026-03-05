@@ -39,6 +39,10 @@ function getExt(pngFile) {
   return supportsWebP ? '.webp' : '.png';
 }
 
+const DEFAULT_OFFICE_NAME = 'Star Office';
+const CUSTOM_OFFICE_NAME = 'Hahn Office';
+const OFFICE_NAME = ((window.STAR_OFFICE_NAME || CUSTOM_OFFICE_NAME || DEFAULT_OFFICE_NAME) + '').trim() || DEFAULT_OFFICE_NAME;
+
 const config = {
   type: Phaser.AUTO,
   width: LAYOUT.game.width,
@@ -82,7 +86,7 @@ function updateLoadingProgress() {
     loadingProgressBar.style.width = percent + '%';
   }
   if (loadingText) {
-    loadingText.textContent = `Loading Star's pixel office... ${percent}%`;
+    loadingText.textContent = `Loading ${OFFICE_NAME}... ${percent}%`;
   }
 }
 
@@ -99,14 +103,19 @@ function hideLoadingOverlay() {
   }, 300);
 }
 
-const STATES = {
-  idle: { name: 'Idle', area: 'breakroom' },
-  writing: { name: 'Organizing docs', area: 'writing' },
-  researching: { name: 'Searching info', area: 'researching' },
-  executing: { name: 'Executing task', area: 'writing' },
-  syncing: { name: 'Syncing backup', area: 'writing' },
-  error: { name: 'Error occurred', area: 'error' }
-};
+const STATE_AREA_ASSET_MAP = Object.freeze({
+  idle: { name: 'Idle', area: 'breakroom', asset: 'idle-asset-grid' },
+  writing: { name: 'Working on tasks', area: 'writing', asset: 'working-asset-grid' },
+  researching: { name: 'Searching info', area: 'writing', asset: 'working-asset-grid' },
+  executing: { name: 'Executing task', area: 'writing', asset: 'working-asset-grid' },
+  // syncing is a legacy state key; it now maps to the rest asset lane
+  syncing: { name: 'Resting / syncing', area: 'writing', asset: 'rest-asset-grid' },
+  error: { name: 'Error occurred', area: 'error', asset: 'error-asset-grid' }
+});
+
+const STATES = Object.freeze(Object.fromEntries(
+  Object.entries(STATE_AREA_ASSET_MAP).map(([k, v]) => [k, { name: v.name, area: v.area }])
+));
 
 const BUBBLE_TEXTS = {
   idle: [
@@ -187,7 +196,7 @@ const BUBBLE_TEXTS = {
   ]
 };
 
-let game, star, sofa, serverroom, areas = {}, currentState = 'idle', pendingDesiredState = null, statusText, lastFetch = 0, lastBlink = 0, lastBubble = 0, targetX = 660, targetY = 170, bubble = null, typewriterText = '', typewriterTarget = '', typewriterIndex = 0, lastTypewriter = 0, syncAnimSprite = null, catBubble = null;
+let game, star, sofa, serverroom, areas = {}, currentState = 'idle', pendingDesiredState = null, statusText, lastFetch = 0, lastBlink = 0, lastBubble = 0, starTargetX = 660, starTargetY = 170, bubble = null, typewriterText = '', typewriterTarget = '', typewriterIndex = 0, lastTypewriter = 0, syncAnimSprite = null, catBubble = null;
 let isMoving = false;
 let waypoints = [];
 let lastWanderAt = 0;
@@ -286,7 +295,7 @@ function preload() {
   });
 
   this.load.image('office_bg', '/static/office_bg_small' + (supportsWebP ? '.webp' : '.png') + '?v={{VERSION_TIMESTAMP}}');
-  this.load.spritesheet('star_idle', '/static/star-idle-spritesheet' + getExt('star-idle-spritesheet.png'), { frameWidth: 128, frameHeight: 128 });
+  this.load.spritesheet('star_idle', '/static/idle-asset-grid' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 256, frameHeight: 256 });
   this.load.spritesheet('star_researching', '/static/star-researching-spritesheet' + getExt('star-researching-spritesheet.png'), { frameWidth: 128, frameHeight: 105 });
 
   this.load.image('sofa_idle', '/static/sofa-idle' + getExt('sofa-idle.png'));
@@ -297,11 +306,11 @@ function preload() {
   this.load.spritesheet('coffee_machine', '/static/coffee-machine-spritesheet' + getExt('coffee-machine-spritesheet.png'), { frameWidth: 230, frameHeight: 230 });
   this.load.spritesheet('serverroom', '/static/serverroom-spritesheet' + getExt('serverroom-spritesheet.png'), { frameWidth: 180, frameHeight: 251 });
 
-  this.load.spritesheet('error_bug', '/static/error-bug-spritesheet-grid' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 180, frameHeight: 180 });
+  this.load.spritesheet('error_bug', '/static/error-asset-grid' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 180, frameHeight: 180 });
   this.load.spritesheet('cats', '/static/cats-spritesheet' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 160, frameHeight: 160 });
   this.load.image('desk', '/static/desk' + getExt('desk.png'));
-  this.load.spritesheet('star_working', '/static/star-working-spritesheet-grid' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 230, frameHeight: 144 });
-  this.load.spritesheet('sync_anim', '/static/sync-animation-spritesheet-grid' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 256, frameHeight: 256 });
+  this.load.spritesheet('star_working', '/static/working-asset-grid' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 230, frameHeight: 144 });
+  this.load.spritesheet('sync_anim', '/static/rest-asset-grid' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 256, frameHeight: 256 });
   this.load.image('memo_bg', '/static/memo-bg' + (supportsWebP ? '.webp' : '.png'));
 
   // EN：EN PNG（EN）
@@ -361,7 +370,7 @@ function create() {
   const plaqueY = LAYOUT.plaque.y;
   const plaqueBg = game.add.rectangle(plaqueX, plaqueY, LAYOUT.plaque.width, LAYOUT.plaque.height, 0x5d4037);
   plaqueBg.setStrokeStyle(3, 0x3e2723);
-  const plaqueText = game.add.text(plaqueX, plaqueY, "Hyacinth Lobster's Office", {
+  const plaqueText = game.add.text(plaqueX, plaqueY, OFFICE_NAME, {
     fontFamily: 'ArkPixel, monospace',
     fontSize: '18px',
     fill: '#ffd700',
@@ -511,7 +520,7 @@ function create() {
   starWorking.setDepth(LAYOUT.furniture.starWorking.depth);
   window.starWorking = starWorking;
 
-  // === SyncEN（EN LAYOUT）===
+  // === Rest animation lane (legacy key: syncing, asset: rest-asset-grid) ===
   this.anims.create({
     key: 'sync_anim',
     frames: this.anims.generateFrameNumbers('sync_anim', { start: 1, end: 52 }),
@@ -764,8 +773,8 @@ function moveStar(time) {
   const stateInfo = STATES[effectiveState] || STATES.idle;
   const baseTarget = areas[stateInfo.area] || areas.breakroom;
 
-  const dx = targetX - star.x;
-  const dy = targetY - star.y;
+  const dx = starTargetX - star.x;
+  const dy = starTargetY - star.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
   const speed = 1.4;
   const wobble = Math.sin(time / 200) * 0.8;
@@ -779,8 +788,8 @@ function moveStar(time) {
     if (waypoints && waypoints.length > 0) {
       waypoints.shift();
       if (waypoints.length > 0) {
-        targetX = waypoints[0].x;
-        targetY = waypoints[0].y;
+        starTargetX = waypoints[0].x;
+        starTargetY = waypoints[0].y;
         isMoving = true;
       } else {
         if (pendingDesiredState !== null) {
